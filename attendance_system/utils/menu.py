@@ -1,5 +1,3 @@
-"""Interactive menu that drives the same command handlers as the subcommands."""
-
 import argparse
 import getpass
 
@@ -61,12 +59,10 @@ MENUS = {
 
 
 def _ask(name, prompt):
-    """Prompt for one value; passwords are not echoed."""
     return getpass.getpass(f"{prompt}: ") if name == "password" else input(f"{prompt}: ")
 
 
 def run_menu(args=None):
-    """Loop showing a role-specific menu until the user quits."""
     while True:
         user = auth.current_user()
         options = MENUS[user.role if user else None]

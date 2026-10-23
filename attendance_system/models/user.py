@@ -1,5 +1,3 @@
-"""Base User class."""
-
 import re
 
 from utils.security import hash_password, verify_password
@@ -9,7 +7,6 @@ MIN_PASSWORD_LENGTH = 6
 
 
 def _clean_name(value, label):
-    """Return a stripped, non-empty name or raise ValueError."""
     value = str(value).strip()
     if not value:
         raise ValueError(f"{label} cannot be empty.")
@@ -17,14 +14,11 @@ def _clean_name(value, label):
 
 
 class User:
-    """Superclass for every system user; subclasses set ROLE and PREFIX."""
-
     ROLE = "user"
     PREFIX = "U"
     all_users = []
 
     def __init__(self, first_name, last_name, email, user_id=None, password_hash=""):
-        """Create a user and add it to the registry."""
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
@@ -54,7 +48,6 @@ class User:
 
     @email.setter
     def email(self, value):
-        """Validate format and uniqueness; emails are stored lowercase."""
         value = str(value).strip().lower()
         if not EMAIL_RE.match(value):
             raise ValueError(f"Invalid email address: '{value}'.")
@@ -69,7 +62,6 @@ class User:
 
     @classmethod
     def next_id(cls):
-        """Generate the next free id for this role, e.g. S001."""
         start = len(cls.PREFIX)
         numbers = [
             int(u.user_id[start:])
@@ -80,31 +72,25 @@ class User:
 
     @staticmethod
     def validate_password(password):
-        """Raise ValueError if the password is too short."""
         if not isinstance(password, str) or len(password) < MIN_PASSWORD_LENGTH:
             raise ValueError(
                 f"Password must be at least {MIN_PASSWORD_LENGTH} characters long."
             )
 
     def set_password(self, password):
-        """Hash and store a new password."""
         self.validate_password(password)
         self._password_hash = hash_password(password)
 
     def check_password(self, password):
-        """Return True if the password matches the stored hash."""
         return verify_password(password, self._password_hash)
 
     def get_full_name(self):
-        """Return 'First Last'."""
         return f"{self.first_name} {self.last_name}"
 
     def view_profile(self):
-        """Return the user's public profile as a dict."""
         return {"Name": self.get_full_name(), "Email": self.email, "Role": self.role}
 
     def to_dict(self):
-        """Serialise the user for JSON storage."""
         return {
             "role": self.ROLE,
             "user_id": self.user_id,
@@ -116,7 +102,6 @@ class User:
 
     @staticmethod
     def role_classes():
-        """Map role names to their classes (imported lazily to avoid cycles)."""
         from models.administrator import Administrator
         from models.student import Student
         from models.teacher import Teacher
@@ -125,7 +110,6 @@ class User:
 
     @staticmethod
     def from_dict(data):
-        """Rebuild the right User subclass from stored data."""
         klass = User.role_classes()[data["role"]]
         return klass(
             data["first_name"],
@@ -137,7 +121,6 @@ class User:
 
     @classmethod
     def register_user(cls, first_name, last_name, email, password, role):
-        """Create a user of the given role with a hashed password."""
         klass = cls.role_classes().get(role)
         if klass is None:
             raise ValueError(f"Unknown role '{role}'. Use student, teacher or admin.")
@@ -148,7 +131,6 @@ class User:
 
     @classmethod
     def find_user(cls, email):
-        """Return the user with this email, or None."""
         email = str(email).strip().lower()
         return next((u for u in User.all_users if u._email == email), None)
 

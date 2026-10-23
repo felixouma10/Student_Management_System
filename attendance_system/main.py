@@ -1,5 +1,3 @@
-"""CLI entry point: argparse subcommands and an interactive menu."""
-
 import argparse
 import logging
 import sys
@@ -13,14 +11,12 @@ console = Console()
 
 
 def build_parser():
-    """Define all subcommands."""
     parser = argparse.ArgumentParser(
         prog="main.py", description="Attendance Management System CLI"
     )
     sub = parser.add_subparsers(dest="command", metavar="command")
 
     def add(name, func, help_text, *arguments, **options):
-        """Register a subcommand with positional args and optional flags."""
         p = sub.add_parser(name, help=help_text, description=help_text)
         for arg in arguments:
             p.add_argument(arg)
@@ -63,7 +59,6 @@ def build_parser():
 
 
 def main(argv=None):
-    """Run one command; returns a process exit code."""
     parser = build_parser()
     args = parser.parse_args(argv)
     if not args.command:

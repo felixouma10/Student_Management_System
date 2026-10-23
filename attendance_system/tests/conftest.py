@@ -13,7 +13,6 @@ from utils import auth, storage
 
 @pytest.fixture(autouse=True)
 def isolated(tmp_path, monkeypatch):
-    """Empty registries and point storage/session files at a temp folder."""
     storage.reset_registries()
     monkeypatch.setattr(storage, "DB_FILE", tmp_path / "records.json")
     yield
@@ -22,7 +21,6 @@ def isolated(tmp_path, monkeypatch):
 
 @pytest.fixture
 def school():
-    """A teacher, a student and a class they share."""
     from models.student import Student
     from models.teacher import Teacher
 

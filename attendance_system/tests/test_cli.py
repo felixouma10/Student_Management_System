@@ -13,7 +13,6 @@ def login(email, password="secret1"):
 
 @pytest.fixture
 def populated():
-    """Admin, teacher, student and a class, built through the CLI."""
     assert run("register", "Grace", "Lee", "admin@x.com", "--password", "secret1") == 0
     login("admin@x.com")
     assert run("add-user", "Alice", "Smith", "teacher@x.com", "teacher", "--password", "secret1") == 0

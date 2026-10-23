@@ -1,5 +1,3 @@
-"""Decorators for logging, authentication, authorisation and validation."""
-
 import functools
 import logging
 
@@ -9,7 +7,6 @@ logger = logging.getLogger("attendance")
 
 
 def log_action(func):
-    """Log each call and any error it raises."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logger.info("running %s", func.__name__)
@@ -22,7 +19,6 @@ def log_action(func):
 
 
 def login_required(func):
-    """Require a logged-in user and pass it to the command as 'user'."""
     @functools.wraps(func)
     def wrapper(args):
         user = auth.current_user()
@@ -33,7 +29,6 @@ def login_required(func):
 
 
 def role_required(*roles):
-    """Allow only the listed roles to run the command."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(args, user):
@@ -47,7 +42,6 @@ def role_required(*roles):
 
 
 def require_args(*names):
-    """Reject the command if a named argument is missing or blank."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(args, *rest):

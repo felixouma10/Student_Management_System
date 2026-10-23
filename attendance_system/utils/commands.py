@@ -1,5 +1,3 @@
-"""CLI command handlers. Each takes parsed args (and the logged-in user when protected)."""
-
 import datetime
 import getpass
 from collections import Counter
@@ -17,7 +15,6 @@ console = Console()
 
 
 def _opt(args, name):
-    """Return a stripped optional argument, or None if missing/blank."""
     value = getattr(args, name, None)
     if isinstance(value, str):
         value = value.strip()
@@ -25,12 +22,10 @@ def _opt(args, name):
 
 
 def _password(args):
-    """Use --password if given, otherwise prompt without echo."""
     return _opt(args, "password") or getpass.getpass("Password: ")
 
 
 def _get_user(email, role=None):
-    """Find a user by email (optionally of a given role) or raise."""
     user = User.find_user(email)
     if user is None or (role and user.role != role):
         raise ValueError(f"No {role or 'user'} found with email '{email}'.")
@@ -38,7 +33,6 @@ def _get_user(email, role=None):
 
 
 def _get_class(class_id, user=None):
-    """Find a class; teachers may only access their own."""
     classroom = Classroom.find(class_id)
     if classroom is None:
         raise ValueError(f"No class found with ID '{class_id}'.")
@@ -48,7 +42,6 @@ def _get_class(class_id, user=None):
 
 
 def _print_table(title, columns, rows):
-    """Render rows as a rich table."""
     if not rows:
         console.print(f"[yellow]No {title.lower()} found.[/yellow]")
         return
@@ -61,7 +54,6 @@ def _print_table(title, columns, rows):
 
 
 def _visible_records(user, args):
-    """Attendance records this user may see, filtered by optional arguments."""
     records = Attendance.all_records
     if user.role == "student":
         records = [r for r in records if r.student is user]
@@ -88,7 +80,6 @@ RECORD_COLUMNS = ["Student", "Class", "Date", "Status"]
 @log_action
 @require_args("first_name", "last_name", "email")
 def cmd_register(args):
-    """Create a new account (the first one becomes the administrator)."""
     user = auth.register(
         args.first_name, args.last_name, args.email, _password(args),
         _opt(args, "role") or "student",
@@ -99,14 +90,12 @@ def cmd_register(args):
 @log_action
 @require_args("email")
 def cmd_login(args):
-    """Log in with email and password."""
     user = auth.login(args.email, _password(args))
     console.print(f"[green]Welcome, {user.get_full_name()} ({user.role}).[/green]")
 
 
 @log_action
 def cmd_logout(args):
-    """Log out of the current session."""
     auth.logout()
     console.print("Logged out.")
 
@@ -114,7 +103,6 @@ def cmd_logout(args):
 @log_action
 @login_required
 def cmd_whoami(args, user):
-    """Show the logged-in user's profile."""
     _print_table("Profile", ["Field", "Value"], user.view_profile().items())
 
 
@@ -123,7 +111,6 @@ def cmd_whoami(args, user):
 @role_required("admin")
 @require_args("first_name", "last_name", "email", "role")
 def cmd_add_user(args, user):
-    """Admin: create a user with any role."""
     new = User.register_user(
         args.first_name, args.last_name, args.email, _password(args), args.role
     )
@@ -134,7 +121,6 @@ def cmd_add_user(args, user):
 @login_required
 @role_required("admin")
 def cmd_list_users(args, user):
-    """Admin: list all users."""
     rows = [(u.user_id, u.get_full_name(), u.email, u.role) for u in User.all_users]
     _print_table("Users", ["ID", "Name", "Email", "Role"], rows)
 
@@ -144,7 +130,6 @@ def cmd_list_users(args, user):
 @role_required("admin")
 @require_args("email")
 def cmd_update_user(args, user):
-    """Admin: change a user's name or email."""
     changes = {
         key: _opt(args, key) for key in ("first_name", "last_name", "new_email")
         if _opt(args, key)
@@ -163,7 +148,6 @@ def cmd_update_user(args, user):
 @role_required("admin")
 @require_args("email")
 def cmd_remove_user(args, user):
-    """Admin: remove a student or teacher."""
     target = _get_user(args.email)
     if target is user:
         raise ValueError("You cannot remove your own account.")
@@ -176,7 +160,6 @@ def cmd_remove_user(args, user):
 @role_required("admin")
 @require_args("class_id", "class_name", "teacher")
 def cmd_add_class(args, user):
-    """Admin: create a class taught by a teacher."""
     classroom = user.create_class(
         args.class_id, args.class_name, _get_user(args.teacher, "teacher")
     )
@@ -186,7 +169,6 @@ def cmd_add_class(args, user):
 @log_action
 @login_required
 def cmd_list_classes(args, user):
-    """List classes (teachers see only their own)."""
     classes = Classroom.all_classes
     if user.role == "teacher":
         classes = user.assigned_classes
@@ -202,7 +184,6 @@ def cmd_list_classes(args, user):
 @role_required("teacher", "admin")
 @require_args("class_id")
 def cmd_class_students(args, user):
-    """Teacher/Admin: list the students in a class."""
     classroom = _get_class(args.class_id, user)
     names = user.view_students(classroom) if user.role == "teacher" \
         else classroom.get_student_list()
@@ -214,7 +195,6 @@ def cmd_class_students(args, user):
 @role_required("student", "admin")
 @require_args("class_id")
 def cmd_enroll(args, user):
-    """Student: enrol in a class. Admin: enrol a student (--student)."""
     if user.role == "student":
         target = user
     else:
@@ -230,7 +210,6 @@ def cmd_enroll(args, user):
 @login_required
 @require_args("class_id", "status")
 def cmd_mark(args, user):
-    """Mark attendance: students for themselves, teachers/admins for a student."""
     classroom = _get_class(args.class_id, user)
     day = _opt(args, "date") or datetime.date.today().isoformat()
     if user.role == "student":
@@ -249,7 +228,6 @@ def cmd_mark(args, user):
 @log_action
 @login_required
 def cmd_view_attendance(args, user):
-    """View attendance you are allowed to see."""
     _print_table("Attendance records", RECORD_COLUMNS,
                  _record_rows(_visible_records(user, args)))
 
@@ -258,7 +236,6 @@ def cmd_view_attendance(args, user):
 @login_required
 @role_required("teacher", "admin")
 def cmd_report(args, user):
-    """Teacher/Admin: attendance records plus per-student totals."""
     records = _visible_records(user, args)
     _print_table("Attendance report", RECORD_COLUMNS, _record_rows(records))
     totals = {}

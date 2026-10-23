@@ -1,13 +1,8 @@
-"""Classroom class."""
-
 
 class Classroom:
-    """A class taught by one teacher with many enrolled students."""
-
     all_classes = []
 
     def __init__(self, class_id, class_name, teacher):
-        """Create a classroom and register it with its teacher."""
         class_id = str(class_id).strip()
         class_name = str(class_name).strip()
         if not class_id or not class_name:
@@ -25,12 +20,10 @@ class Classroom:
 
     @classmethod
     def find(cls, class_id):
-        """Return the classroom with this id, or None."""
         class_id = str(class_id).strip()
         return next((c for c in cls.all_classes if c.class_id == class_id), None)
 
     def add_student(self, student):
-        """Enrol a student (updates both sides, ignores duplicates)."""
         if getattr(student, "role", None) != "student":
             raise ValueError("Only students can be enrolled in a class.")
         if student not in self.students:
@@ -39,18 +32,15 @@ class Classroom:
             student.enrolled_classes.append(self)
 
     def remove_student(self, student):
-        """Remove a student from the class (updates both sides)."""
         if student in self.students:
             self.students.remove(student)
         if self in student.enrolled_classes:
             student.enrolled_classes.remove(self)
 
     def get_student_list(self):
-        """Return the full names of enrolled students."""
         return [s.get_full_name() for s in self.students]
 
     def to_dict(self):
-        """Serialise the classroom for JSON storage."""
         return {
             "class_id": self.class_id,
             "class_name": self.class_name,

@@ -38,7 +38,9 @@ attendance_system/
 │   ├── commands.py      # CLI command handlers
 │   └── menu.py          # Interactive menu
 ├── tests/               # pytest unit tests
-├── requirements.txt
+├── requirements.txt     # Dependencies for pip/venv
+├── Pipfile              # Pipenv configuration (Python 3.12)
+├── Pipfile.lock         # Locked Pipenv dependencies
 └── README.md
 ```
 
@@ -56,37 +58,66 @@ Classroom 1 ──* Attendance *── 1 Student
 
 ## Setup
 
-Requires Python 3.10 or newer.
+Use Python 3.12, as specified by the Pipenv configuration and lockfile. Run the commands below from the `attendance_system` directory (the directory containing `main.py`).
 
 ```bash
 git clone <repo-url>
 cd attendance_system
-pip install -r requirements.txt
+```
+
+### Using `venv` and pip
+
+Create a virtual environment, activate it, and install the project dependencies from `requirements.txt`:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+On Windows PowerShell, activate the environment with:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Then use `python` in place of `python3.12` for the remaining commands.
+
+### Using Pipenv
+
+Install Pipenv if needed, then use the checked-in lockfile to create the environment and install the locked dependencies:
+
+```bash
+python3.12 -m pip install --user pipenv
+pipenv sync
 ```
 
 ## Running
 
-Show all commands: `python3 main.py --help` (each command also has `--help`).
+With the virtual environment activated, run commands using `python main.py`. If using Pipenv without activating its environment, prefix commands with `pipenv run`, for example `pipenv run python main.py --help`.
+
+Show all commands with `python main.py --help`; show options for a particular command with `python main.py <command> --help`.
 
 The **first account registered becomes the administrator**. After that, `register` creates students or teachers, and only an admin can create other admins (`add-user`).
 
 ```bash
-python3 main.py register Grace Lee admin@school.com --password secret1
-python3 main.py login admin@school.com --password secret1
-python3 main.py add-user Alice Smith alice@school.com teacher --password secret1
-python3 main.py add-user John Doe john@school.com student --password secret1
-python3 main.py add-class C101 Math alice@school.com
-python3 main.py enroll C101 --student john@school.com
+python main.py register Grace Lee admin@school.com --password secret1
+python main.py login admin@school.com --password secret1
+python main.py add-user Alice Smith alice@school.com teacher --password secret1
+python main.py add-user John Doe john@school.com student --password secret1
+python main.py add-class C101 Math alice@school.com
+python main.py enroll C101 --student john@school.com
 
-python3 main.py login john@school.com --password secret1
-python3 main.py mark C101 present                 # date defaults to today
+python main.py login john@school.com --password secret1
+python main.py mark C101 present                 # date defaults to today
 
-python3 main.py login alice@school.com --password secret1
-python3 main.py mark C101 late --student john@school.com --date 2026-10-19
-python3 main.py report --class-id C101
+python main.py login alice@school.com --password secret1
+python main.py mark C101 late --student john@school.com --date 2026-10-19
+python main.py report --class-id C101
 ```
 
-Omit `--password` to be prompted without echo. Login is stored in `data/session.json` until you run `logout`.
+Omit `--password` to be prompted without echo. Login is stored in `data/session.json` until you run `logout`. The application creates its `data/` directory and files when needed.
 
 ### Commands
 
@@ -109,15 +140,31 @@ Omit `--password` to be prompted without echo. Login is stored in `data/session.
 
 ## Data and persistence
 
-All data is saved to `data/records.json` after every successful command, with users, classrooms and attendance linked by email and class id. A missing file starts empty; an unreadable or inconsistent file is renamed to `records.corrupt` and the app starts empty. Passwords are stored only as salted hashes. Logs go to `data/app.log` when run via `python3 main.py`.
+All data is saved to `data/records.json` after every successful command, with users, classrooms and attendance linked by email and class id. A missing file starts empty; an unreadable or inconsistent file is renamed to `records.corrupt` and the app starts empty. Passwords are stored only as salted hashes. Logs go to `data/app.log` when run via `python main.py`. To start with a clean school dataset, back up and remove `data/records.json` and `data/session.json` while the application is not running.
 
 ## Tests
 
+Run the full test suite from the `attendance_system` directory with the project environment activated:
+
 ```bash
-python3 -m pytest
+python -m pytest
 ```
 
-Covers models, authentication, storage (including corrupt files) and CLI flows with role checks.
+Alternatively, run the suite with Pipenv without activating its environment:
+
+```bash
+pipenv run python -m pytest
+```
+
+Pytest can also run a particular test file, select tests by name, or show each test as it runs:
+
+```bash
+python -m pytest tests/test_auth.py
+python -m pytest -k login
+python -m pytest -v
+```
+
+In VS Code, select the project environment as the Python interpreter, configure pytest as the test framework, then use the Testing panel to discover and run individual tests. The suite covers models, authentication, storage (including corrupt files), and CLI flows with role checks.
 
 ## Known issues
 

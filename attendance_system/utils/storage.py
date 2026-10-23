@@ -1,5 +1,3 @@
-"""JSON persistence for users, classrooms and attendance records."""
-
 import json
 import os
 from pathlib import Path
@@ -12,18 +10,16 @@ DB_FILE = Path(__file__).resolve().parent.parent / "data" / "records.json"
 
 
 class StorageError(Exception):
-    """Raised when data cannot be saved."""
+    pass
 
 
 def reset_registries():
-    """Empty every in-memory registry."""
     User.all_users.clear()
     Classroom.all_classes.clear()
     Attendance.all_records.clear()
 
 
 def _snapshot():
-    """Return all registries as a JSON-ready dict."""
     return {
         "users": [u.to_dict() for u in User.all_users],
         "classrooms": [c.to_dict() for c in Classroom.all_classes],
@@ -32,7 +28,6 @@ def _snapshot():
 
 
 def save(path=None):
-    """Write all data to disk atomically."""
     path = Path(path or DB_FILE)
     tmp = path.with_suffix(".tmp")
     try:
@@ -44,7 +39,6 @@ def save(path=None):
 
 
 def _restore(data):
-    """Rebuild registries from a loaded dict (raises on bad data)."""
     for item in data.get("users", []):
         User.from_dict(item)
     for item in data.get("classrooms", []):
@@ -62,7 +56,6 @@ def _restore(data):
 
 
 def load(path=None):
-    """Load data from disk; a missing file starts empty, a corrupt one is set aside."""
     path = Path(path or DB_FILE)
     reset_registries()
     if not path.exists():
